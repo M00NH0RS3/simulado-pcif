@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#38bdf8">
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js")
+      .then(() => console.log("Service Worker registrado"))
+      .catch(err => console.error("SW erro:", err));
+  }
+</script>
+
+  <title>Simulado – PCIF (60 questões)</title>
+  <style>
+    :root{
+      --bg:#0f172a; --card:#0b1222f2; --muted:#94a3b8; --text:#e5e7eb; --accent:#38bdf8; --ok:#16a34a; --bad:#dc2626; --border:#334155;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,rgba(56,189,248,.15),transparent),
+                    radial-gradient(1000px 600px at 120% 20%,rgba(34,197,94,.12),transparent),var(--bg);
+         color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    .container{max-width:1100px;margin:24px auto;padding:0 16px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    header h1{font-size:1.25rem;margin:0}
+    .card{background:var(--card);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .panel{padding:16px}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .chip{background:#0b1328;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:.85rem;color:var(--muted)}
+    .btn{appearance:none;border:1px solid var(--border);background:#0a1222;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;transition:.2s;font-weight:700}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    .btn.primary{background:linear-gradient(135deg,#38bdf8,#34d399);border-color:transparent;color:#001018}
+    .q{padding:16px;border-top:1px dashed var(--border)}
+    .q-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .q-title{font-weight:700}
+    .q-body{margin-top:8px}
+    .alt{display:block;margin:.25rem 0;padding:.35rem .6rem;border:1px solid transparent;border-radius:10px;cursor:pointer}
+    .alt input{margin-right:.5rem}
+    .alt.sel{border-color:#1f2937;background:#0f1a33}
+    .status{margin-top:8px;font-size:.95rem}
+    .status.ok{color:var(--ok)}
+    .status.bad{color:var(--bad)}
+    .ok-bg{background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.35)}
+    .bad-bg{background:rgba(220,38,38,.10);border:1px solid rgba(220,38,38,.35)}
+    .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 0}
+    .footer{margin:24px 0 40px;color:var(--muted);font-size:.9rem;text-align:center}
+    details{background:#0b1328;border:1px solid var(--border);border-radius:12px;padding:10px;margin:12px 0}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 Simulado – PCIF (60 questões)</h1>
+      <div class="row">
+        <span id="score" class="chip">Acertos: 0/0</span>
+        <span id="aproveitamento" class="chip">Aproveitamento: 0%</span>
+      </div>
+    </header>
+
+    <section id="exam" class="card panel">
+      <div class="row" style="justify-content:space-between">
+        <strong>Marque suas respostas e clique em <em>Verificar</em> em cada questão ou em <em>Verificar Tudo</em> ao final.</strong>
+<details>
+      <summary>Como funciona</summary>
+      <ul>
+        <li>Responda as questões de múltipla escolha e as questões de verdadeiro/falso.</li>
+        <li>Ao verificar, a questão fica <b style="color: var(--ok);">verde</b> se correta, <b style="color: var(--bad);">vermelha</b> se incorreta e mostra a alternativa certa.</li>
+        <li>Você pode <b>exportar</b> um CSV com resultados.</li>
+      </ul>
+    </details>
+        <div class="row">
+          <button id="btnReset" class="btn">Resetar</button>
+          <button id="btnExport" class="btn">Exportar CSV</button>
+        </div>
+      </div>
+      <div id="lista"></div>
+      <button id="btnCheckAll" class="btn primary">Verificar Tudo</button>
+    </section>
+
+    
+
+    <p class="footer">&copy; 2025 CFSd Hotel</p>
+  </div>
+
+  <script>
+    const questoes=[
+    {n:1, enu:"O fogo é:", vf:false, alts:["Uma reação química entre combustível e comburente com energia de ativação.","Sempre um desastre ambiental.","Um fenômeno físico sem reação química.","Um processo sem necessidade de oxigênio."], correta:"a"},
+    {n:2, enu:"O incêndio florestal é todo fogo que se mantém controlado e planejado pelo homem.", vf:true, correta:"F"},
+    {n:3, enu:"O triângulo do fogo é formado por:", vf:false, alts:["Combustível, calor e vento.","Combustível, comburente e calor.","Oxigênio, fumaça e combustão.","Combustível, solo e água."], correta:"b"},
+    {n:4, enu:"O único fator natural considerado causa de incêndio florestal no CBMMG é:", vf:false, alts:["Vulcão.","Descarte de cigarro.","Descarga elétrica (raio).","Trovoada sem chuva."], correta:"c"},
+    {n:5, enu:"Fumaça branca indica que a queima é mais completa e ocorre em vegetação densa.", vf:true, correta:"F"},
+    {n:6, enu:"A parte do fogo que avança mais rápido é chamada de:", vf:false, alts:["Flancos","Cabeça","Cauda","Bolsão"], correta:"b"},
+    {n:7, enu:"Aceiro é uma faixa de terreno sem cobertura vegetal usada como barreira contra a propagação do fogo.", vf:true, correta:"V"},
+    {n:8, enu:"Entre os métodos de extinção do fogo, NÃO está:", vf:false, alts:["Resfriamento","Abafamento","Retirada de combustível","Aumento da ventilação"], correta:"d"},
+    {n:9, enu:"No protocolo LACES, a letra E significa:", vf:false, alts:["Estabilidade","Escape Routes (rotas de fuga)","Extinção do fogo","Entrada segura"], correta:"b"},
+    {n:10, enu:"A latitude mede a distância em graus do Equador, podendo variar de 0° a 90°.", vf:true, correta:"V"},
+    {n:11, enu:"O Meridiano de origem adotado mundialmente é:", vf:false, alts:["Equador","Trópico de Câncer","Meridiano de Greenwich","Linha Internacional da Data"], correta:"c"},
+    {n:12, enu:"Qual formato de coordenadas é mais usado em softwares de mapeamento?", vf:false, alts:["Graus, minutos e segundos","Graus, minutos decimais","Graus decimais","Formato cartesiano"], correta:"c"},
+    {n:13, enu:"O sistema UTM usa metros como unidade de medida.", vf:true, correta:"V"},
+    {n:14, enu:"O Datum usado mundialmente, inclusive no Google Earth, é:", vf:false, alts:["SIRGAS2000","SAD69","WGS84","Greenwich 1800"], correta:"c"},
+    {n:15, enu:"O erro médio de posicionamento de um GPS comum varia entre:", vf:false, alts:["1 e 2 metros","7 e 15 metros","50 e 100 metros","Mais de 500 metros"], correta:"b"},
+    {n:16, enu:"A longitude é a distância em graus do Equador.", vf:true, correta:"F"},
+    {n:17, enu:"Aplicativos de smartphones podem substituir:", vf:false, alts:["Bombas costais","Ferramentas manuais","GPS tradicionais","Abafadores"], correta:"c"},
+    {n:18, enu:"O combate direto consiste em:", vf:false, alts:["Atacar o fogo diretamente na linha de chamas.","Construir aceiros distantes do fogo.","Aguardar o fogo perder intensidade.","Lançar retardante químico a longa distância."], correta:"a"},
+    {n:19, enu:"O fogo subterrâneo ocorre em turfas e serrapilheira abaixo da superfície.", vf:true, correta:"V"},
+    {n:20, enu:"As correntes de ar quente que sobem e espalham o fogo caracterizam:", vf:false, alts:["Condução","Convecção","Radiação","Oxidação"], correta:"b"},
+    {n:21, enu:"O tetraedro do fogo adiciona ao triângulo o elemento:", vf:false, alts:["Radiação","Vento","Reação em cadeia","Combustível secundário"], correta:"c"},
+    {n:22, enu:"Fumaça escura indica combustão incompleta de material denso.", vf:true, correta:"V"},
+    {n:23, enu:"Um aceiro químico é:", vf:false, alts:["Uma vala escavada no solo.","Uma faixa tratada com retardante químico.","Uma estrada asfaltada.","Um rio natural."], correta:"b"},
+    {n:24, enu:"Entre os incrementos do aceiro está:", vf:false, alts:["Linha negra","Fogo aéreo","Retardamento térmico","Faixa paralela"], correta:"a"},
+    {n:25, enu:"O incêndio superficial abrange vegetação até 1,80m de altura.", vf:true, correta:"V"},
+    {n:26, enu:"No combate indireto:", vf:false, alts:["Usa-se aeronaves de ataque imediato.","Constrói-se aceiros a certa distância do fogo.","Entra-se direto na linha de chamas.","Ataca-se somente após o fogo extinguir-se."], correta:"b"},
+    {n:27, enu:"No LACES, “Lookout” significa:", vf:false, alts:["Vigia para observar o comportamento do fogo.","Rotas de fuga.","Comunicação eficaz.","Estado de alerta."], correta:"a"},
+    {n:28, enu:"A topografia influencia o fogo: em aclive ele se propaga mais rápido, em declive mais lento.", vf:true, correta:"V"},
+    {n:29, enu:"O sistema UTM é baseado em:", vf:false, alts:["Coordenadas polares","Graus, minutos e segundos","Eixos cartesianos X e Y","Radiação solar"], correta:"c"},
+    {n:30, enu:"A longitude positiva corresponde ao:", vf:false, alts:["Hemisfério Ocidental","Hemisfério Oriental","Hemisfério Sul","Hemisfério Norte"], correta:"b"},
+    {n:31, enu:"O combate paralelo é intermediário entre o direto e o indireto.", vf:true, correta:"V"},
+    {n:32, enu:"Em um incêndio de copa, o combate deve ser:", vf:false, alts:["Direto, com abafadores.","A distância, com apoio aéreo.","Somente com água em troncos.","Apenas com fogo contra fogo."], correta:"b"},
+    {n:33, enu:"A largura de um aceiro depende principalmente de:", vf:false, alts:["Vegetação, topografia e comportamento do fogo.","Clima, fauna e horário do dia.","Tipo de solo e presença de rios.","Disponibilidade de pessoal."], correta:"a"},
+    {n:34, enu:"Meridianos medem latitude e paralelos medem longitude.", vf:true, correta:"F"},
+    {n:35, enu:"A precisão do GPS é influenciada por:", vf:false, alts:["Atmosfera, multitrajetória, posição dos satélites.","Cor da tela do aparelho.","Modelo da bateria.","Cor da vegetação."], correta:"a"},
+    {n:36, enu:"No LACES, Safety Zones devem ser:", vf:false, alts:["Áreas já queimadas ou sem combustível.","Pontos no topo de encostas com fogo abaixo.","Áreas densamente arborizadas.","Sempre dentro do perímetro de chamas."], correta:"a"},
+    {n:37, enu:"A radiação térmica pode pré-aquecer combustíveis à distância.", vf:true, correta:"V"},
+    {n:38, enu:"O combate subterrâneo pode exigir:", vf:false, alts:["Abertura de valas e encharcamento do solo.","Abafadores manuais.","Retardante químico aéreo.","Nenhuma ação, pois se apaga sozinho."], correta:"a"},
+    {n:39, enu:"O Meridiano de Greenwich divide a Terra em:", vf:false, alts:["Hemisfério Norte e Sul.","Hemisfério Oriental e Ocidental.","Hemisfério Equatorial.","Hemisfério Magnético."], correta:"b"},
+    {n:40, enu:"O Google Earth usa o Datum WGS84.", vf:true, correta:"V"},
+    {n:41, enu:"O fator que mais acelera a propagação em morros é:", vf:false, alts:["Condução","Radiação + convecção em aclive","Radiação em declive","Umidade do solo"], correta:"b"},
+    {n:42, enu:"Em aclives, o aceiro deve ser construído:", vf:false, alts:["Em forma de valas, para conter rolamento de materiais incandescentes.","Sempre no topo do morro.","Apenas em linhas horizontais.","Nunca em valas."], correta:"a"},
+    {n:43, enu:"Incêndios totais combinam subterrâneo, superficial e aéreo.", vf:true, correta:"V"},
+    {n:44, enu:"Um foco secundário normalmente surge:", vf:false, alts:["Próximo à cabeça do incêndio.","Apenas na cauda.","Dentro de bolsões.","Em áreas úmidas."], correta:"a"},
+    {n:45, enu:"A conversão de 20,259722° em graus, minutos e segundos resulta em:", vf:false, alts:["20°15’35”","20°25’59”","20°2’59”","20°16’22”"], correta:"a"},
+    {n:46, enu:"O erro de GPS diferencial pode ser reduzido a poucos centímetros.", vf:true, correta:"V"},
+    {n:47, enu:"O formato mais difícil de trabalhar, mas comum em mapas impressos, é:", vf:false, alts:["Graus decimais","Graus, minutos e segundos","Graus, minutos decimais","UTM"], correta:"b"},
+    {n:48, enu:"A sigla UTM significa:", vf:false, alts:["Universal Topographic Map","Universal Transversa de Mercator","Uniform Terrain Measurement","Unitary Topographic Model"], correta:"b"},
+    {n:49, enu:"A fumaça escura indica que há predominância de vapores de água na combustão.", vf:true, correta:"F"},
+    {n:50, enu:"O combate com apoio aéreo só é eficaz se:", vf:false, alts:["A aeronave lançar água em intervalos de até 7–15 minutos, com equipes em solo.","For realizado sozinho, sem equipes de terra.","Usar apenas retardante químico.","For feito em locais urbanos."], correta:"a"},
+    {n:51, enu:"No LACES, 'Anchor Points' se referem a:", vf:false, alts:["Rotas de fuga","Pontos de início seguros para linhas de supressão","Áreas já queimadas","Pontos de abastecimento de água"], correta:"b"},
+    {n:52, enu:"Paralelos são linhas imaginárias Norte-Sul que indicam longitude.", vf:true, correta:"F"},
+    {n:53, enu:"Em incêndios aéreos, é recomendado:", vf:false, alts:["Permanecer sob as chamas","Combate à distância, com isolamento e retardantes","Combate direto com abafadores","Esperar extinguir sozinho"], correta:"b"},
+    {n:54, enu:"O triângulo do comportamento do fogo é composto por:", vf:false, alts:["Combustível, topografia e meteorologia","Combustível, vento e água","Fumaça, calor e umidade","Latitude, longitude e altitude"], correta:"a"},
+    {n:55, enu:"Aceiros podem ser naturais, artificiais ou químicos.", vf:true, correta:"V"},
+    {n:56, enu:"Um exemplo de aceiro natural é:", vf:false, alts:["Estrada asfaltada","Rio ou lago","Linha negra","Retardante químico"], correta:"b"},
+    {n:57, enu:"A precisão do GPS pode ser prejudicada principalmente por:", vf:false, alts:["Multitrajetória e erro atmosférico","Cor da capa protetora do aparelho","Umidade relativa do solo","Número de usuários conectados ao satélite"], correta:"a"},
+    {n:58, enu:"No sistema UTM, cada zona possui largura de 30° de longitude.", vf:true, correta:"F"},
+    {n:59, enu:"O combate paralelo é utilizado quando:", vf:false, alts:["A intensidade e altura das chamas (1,8 a 2,5m) não permitem combate direto.","O fogo já se extinguiu.","O incêndio é subterrâneo.","Há disponibilidade de retardante químico."], correta:"a"},
+    {n:60, enu:"A bordadura no aceiro consiste em:", vf:false, alts:["Queimar intencionalmente vegetação controlada.","Poda lateral para reduzir intensidade de chamas.","Compactação da vegetação rasteira.","Umedecimento da linha de defesa."], correta:"b"}
+  ];
+
+    const lista = document.getElementById('lista');
+
+    function render(){
+      lista.innerHTML = '';
+      for(const q of questoes){
+        const div = document.createElement('div');
+        div.className = 'q';
+        div.id = `q${q.n}`;
+        div.innerHTML = `
+          <div class="q-head">
+            <div class="q-title"><span class="chip">${q.n}</span> ${q.enu}</div>
+            <button class="btn" data-action="verificar">Verificar</button>
+          </div>
+          <div class="q-body" role="group" aria-label="Questão ${q.n}"></div>
+          <div class="status"></div>
+        `;
+        const body = div.querySelector('.q-body');
+        if(q.vf){
+          ['V','F'].forEach(val=>{
+            const label = document.createElement('label');
+            label.className = 'alt';
+            label.innerHTML = `<input type="radio" name="q${q.n}" value="${val}"> ${val}`;
+            body.appendChild(label);
+          });
+        }else{
+          const letras = ['a','b','c','d'];
+          q.alts.forEach((txt,idx)=>{
+            const letra = letras[idx];
+            const label = document.createElement('label');
+            label.className = 'alt';
+            label.innerHTML = `<input type="radio" name="q${q.n}" value="${letra}"> (${letra}) ${txt}`;
+            body.appendChild(label);
+          });
+        }
+        lista.appendChild(div);
+      }
+
+      lista.addEventListener('change', e=>{
+        const lab = e.target?.closest?.('.alt');
+        if(lab){
+          const group = lab.parentElement;
+          group.querySelectorAll('.alt').forEach(x=>x.classList.remove('sel'));
+          lab.classList.add('sel');
+        }
+      });
+
+      lista.addEventListener('click', e=>{
+        const btn = e.target.closest('button[data-action="verificar"]');
+        if(!btn) return;
+        const card = btn.closest('.q');
+        const n = Number(card.id.replace('q',''));
+        verificar(n);
+        atualizarPlacar();
+      });
+    }
+
+    function verificar(n){
+      const q = questoes.find(x=>x.n===n);
+      const card = document.getElementById(`q${n}`);
+      const status = card.querySelector('.status');
+      const marcada = card.querySelector('input:checked');
+      card.classList.remove('ok-bg','bad-bg');
+      status.className = 'status';
+      if(!marcada){ status.textContent = 'Não respondida.'; return false; }
+      const val = marcada.value.toLowerCase();
+      const ok  = (q.vf ? val.toUpperCase() : val) === q.correta;
+      if(ok){
+        card.classList.add('ok-bg');
+        status.classList.add('ok');
+        status.textContent = '✔ Correto';
+      }else{
+        card.classList.add('bad-bg');
+        status.classList.add('bad');
+        if(q.vf){
+          status.textContent = `✖ Incorreto. Correto: ${q.correta}`;
+        }else{
+          const letras = ['a','b','c','d'];
+          const idx = letras.indexOf(q.correta);
+          const textoCorreto = q.alts[idx];
+          status.textContent = `✖ Incorreto. Correto: (${q.correta}) ${textoCorreto}`;
+        }
+      }
+      return ok;
+    }
+
+    function verificarTudo(){
+      let withKey=0, correct=0;
+      for(const q of questoes){
+        withKey++;
+        if(verificar(q.n)) correct++;
+      }
+      atualizarPlacar(correct, withKey);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function atualizarPlacar(forceCorrect, forceTotal){
+      let total = forceTotal ?? questoes.length;
+      let correct = forceCorrect ?? Array.from(document.querySelectorAll('.status.ok')).length;
+      document.getElementById('score').textContent = `Acertos: ${correct}/${total}`;
+      const ap = total ? Math.round((correct/total)*100) : 0;
+      document.getElementById('aproveitamento').textContent = `Aproveitamento: ${ap}%`;
+    }
+
+    function resetar(){
+      document.querySelectorAll('input[type="radio"]').forEach(i=>i.checked=false);
+      document.querySelectorAll('.alt').forEach(l=>l.classList.remove('sel'));
+      document.querySelectorAll('.q').forEach(c=>c.classList.remove('ok-bg','bad-bg'));
+      document.querySelectorAll('.status').forEach(s=>{ s.className='status'; s.textContent=''; });
+      atualizarPlacar(0, questoes.length);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function exportCSV(){
+      const linhas = [["#","Enunciado","Resposta","Gabarito","Resultado"]];
+      for(const q of questoes){
+        const card = document.getElementById(`q${q.n}`);
+        const marcada = card.querySelector('input:checked');
+        let resp = marcada ? marcada.value.toUpperCase() : '';
+        let gab = q.vf ? q.correta : q.correta.toUpperCase();
+        let resultado = card.querySelector('.status').classList.contains('ok') ? 'Correto' : (marcada ? 'Incorreto' : 'Não respondida');
+        linhas.push([q.n, q.enu.replaceAll('\n',' ').trim(), resp, gab, resultado]);
+      }
+      const csv = linhas.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'resultado_simulado_dh.csv'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    }
+
+    // Render e binds iniciais
+    render();
+    atualizarPlacar(0, questoes.length);
+
+    document.getElementById('btnCheckAll').addEventListener('click', verificarTudo);
+    document.getElementById('btnReset').addEventListener('click', resetar);
+    document.getElementById('btnExport').addEventListener('click', exportCSV);
+  </script>
+</body>
+</html>
